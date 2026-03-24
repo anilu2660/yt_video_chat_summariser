@@ -27,3 +27,4 @@ scikit-learn
 
 streamlit
 youtube_transcript_api
+-U langchain-text-splitters
