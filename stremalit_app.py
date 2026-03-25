@@ -3,6 +3,7 @@ import streamlit as st
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled
+from youtube_transcript_api.proxies import WebshareProxyConfig
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
@@ -28,7 +29,19 @@ if "loaded_video" not in st.session_state:
 def build_chain(video_id: str, api_key: str):
     os.environ["OPENAI_API_KEY"] = api_key
 
-    ytt = YouTubeTranscriptApi()
+    # Use Webshare proxy to bypass YouTube's cloud IP block (set env vars on Render)
+    proxy_user = os.getenv("WEBSHARE_PROXY_USER", "")
+    proxy_pass = os.getenv("WEBSHARE_PROXY_PASS", "")
+
+    if proxy_user and proxy_pass:
+        proxy_config = WebshareProxyConfig(
+            proxy_username=proxy_user,
+            proxy_password=proxy_pass,
+        )
+        ytt = YouTubeTranscriptApi(proxies=proxy_config)
+    else:
+        ytt = YouTubeTranscriptApi()
+
     transcript_list = ytt.fetch(video_id, languages=["en"])
     transcript = " ".join(snippet.text for snippet in transcript_list)
 
@@ -85,7 +98,15 @@ if st.button("Process Video"):
             except (NoTranscriptFound, TranscriptsDisabled):
                 st.error("❌ No English transcript found for this video.")
             except Exception as e:
-                st.error(f"❌ Error: {e}")
+                err_msg = str(e)
+                if "IP" in err_msg or "blocked" in err_msg.lower() or "RequestBlocked" in err_msg:
+                    st.error(
+                        "❌ YouTube is blocking requests from this server's IP address. "
+                        "Please set the `WEBSHARE_PROXY_USER` and `WEBSHARE_PROXY_PASS` "
+                        "environment variables on Render with your [Webshare](https://www.webshare.io/) credentials."
+                    )
+                else:
+                    st.error(f"❌ Error: {e}")
 
 if st.session_state.loaded_video:
     st.caption(f"Active video ID: `{st.session_state.loaded_video}`")
