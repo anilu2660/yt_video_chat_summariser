@@ -131,6 +131,9 @@ yt_chatbot_rag/
 
 ---
 
+## DEPLOYMENT: RENDER
+URL : https://yt-video-chat.onrender.com/
+
 ## ⚠️ Limitations
 
 - Only works with YouTube videos that have **English transcripts** (auto-generated or manual).
