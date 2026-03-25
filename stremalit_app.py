@@ -29,7 +29,7 @@ if "loaded_video" not in st.session_state:
 def build_chain(video_id: str, api_key: str):
     os.environ["OPENAI_API_KEY"] = api_key
 
-    # Use Webshare proxy to bypass YouTube's cloud IP block (set env vars on Render)
+    
     proxy_user = os.getenv("WEBSHARE_PROXY_USER", "")
     proxy_pass = os.getenv("WEBSHARE_PROXY_PASS", "")
 
